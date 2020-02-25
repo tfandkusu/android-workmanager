@@ -57,45 +57,59 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
         // 1回だけのタスクを予約
         // workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
 
-        // 入力付きタスク
-        val blurRequest = OneTimeWorkRequestBuilder<BlurWorker>()
-                .setInputData(createInputDataForUri())
-                .build()
-        workManager.enqueue(blurRequest)
+        // workManager.enqueue(blurRequest)
+        // 連鎖するタスク
+        val cleanupTask = OneTimeWorkRequest
+                .from(CleanupWorker::class.java)
+        val saveTask = OneTimeWorkRequest
+                .from(SaveImageToFileWorker::class.java)
+
+        var continuation = workManager.beginWith(cleanupTask)
+
+        for (i in 0 until blurLevel) {
+            // 入力付きタスク
+            val blurRequestBuilder = OneTimeWorkRequestBuilder<BlurWorker>()
+            // 出力は次の入力になる。
+            if(i == 0)
+                blurRequestBuilder.setInputData(createInputDataForUri())
+            continuation = continuation.then(blurRequestBuilder.build())
+        }
+        continuation = continuation.then(saveTask)
+        continuation.enqueue()
 
         /**
         // Add WorkRequest to Cleanup temporary images
         var continuation = workManager
-                .beginUniqueWork(
-                        IMAGE_MANIPULATION_WORK_NAME,
-                        ExistingWorkPolicy.REPLACE,
-                        OneTimeWorkRequest.from(CleanupWorker::class.java)
-                )
+        .beginUniqueWork(
+        IMAGE_MANIPULATION_WORK_NAME,
+        ExistingWorkPolicy.REPLACE,
+        OneTimeWorkRequest.from(CleanupWorker::class.java)
+        )
 
         // Add WorkRequests to blur the image the number of times requested
         for (i in 0 until blurLevel) {
-            val blurBuilder = OneTimeWorkRequestBuilder<BlurWorker>()
+        val blurBuilder = OneTimeWorkRequestBuilder<BlurWorker>()
 
-            // Input the Uri if this is the first blur operation
-            // After the first blur operation the input will be the output of previous
-            // blur operations.
-            if (i == 0) {
-                blurBuilder.setInputData(createInputDataForUri())
-            }
+        // Input the Uri if this is the first blur operation
+        // After the first blur operation the input will be the output of previous
+        // blur operations.
+        if (i == 0) {
+        blurBuilder.setInputData(createInputDataForUri())
+        }
 
-            continuation = continuation.then(blurBuilder.build())
+        continuation = continuation.then(blurBuilder.build())
         }
 
         // Create charging constraint
         val constraints = Constraints.Builder()
-                .setRequiresCharging(true)
-                .build()
+        .setRequiresCharging(true)
+        .build()
 
         // Add WorkRequest to save the image to the filesystem
         val save = OneTimeWorkRequestBuilder<SaveImageToFileWorker>()
-                .setConstraints(constraints)
-                .addTag(TAG_OUTPUT)
-                .build()
+        .setConstraints(constraints)
+        .addTag(TAG_OUTPUT)
+        .build()
         continuation = continuation.then(save)
 
         // Actually start the work
