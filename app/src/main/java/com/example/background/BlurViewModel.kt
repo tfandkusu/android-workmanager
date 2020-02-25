@@ -38,6 +38,9 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     internal var imageUri: Uri? = null
     internal var outputUri: Uri? = null
     internal val outputWorkInfoItems: LiveData<List<WorkInfo>>
+    /**
+     * WorkManagerを取得する
+     */
     private val workManager: WorkManager = WorkManager.getInstance(application)
 
     init {
@@ -51,7 +54,10 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
      * @param blurLevel The amount to blur the image
      */
     internal fun applyBlur(blurLevel: Int) {
+        // 1回だけのタスクを予約
+        workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
 
+        /**
         // Add WorkRequest to Cleanup temporary images
         var continuation = workManager
                 .beginUniqueWork(
@@ -87,7 +93,7 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
         continuation = continuation.then(save)
 
         // Actually start the work
-        continuation.enqueue()
+        continuation.enqueue()**/
 
     }
 

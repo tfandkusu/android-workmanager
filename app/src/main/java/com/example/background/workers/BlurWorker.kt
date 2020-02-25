@@ -27,27 +27,37 @@ import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.example.background.R
 import timber.log.Timber
 
+/**
+ * バックグランドで動作させたい実際のWork
+ */
 class BlurWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
     override fun doWork(): Result {
+        // このメソッドをoverrideする
         val appContext = applicationContext
 
         // Makes a notification when the work starts and slows down the work so that it's easier to
         // see each WorkRequest start, even on emulated devices
         makeStatusNotification("Blurring image", appContext)
-        sleep()
 
         return try {
-            val outputData = createBlurredBitmap(appContext, inputData.getString(KEY_IMAGE_URI))
-            Result.success(outputData)
-        } catch (fileNotFoundException: FileNotFoundException) {
-            Timber.e(fileNotFoundException)
-            throw RuntimeException("Failed to decode input stream", fileNotFoundException)
+            // テスト用画像からビットマップを生成し
+            val picture = BitmapFactory.decodeResource(
+                    appContext.resources,
+                    R.drawable.test)
+            // ブラーエフェクトをかけて別のBitmapを作成し
+            val output = blurBitmap(picture, appContext)
+            // 書き出す
+            val outputUri = writeBitmapToFile(appContext, output)
+            // 通知を表示する
+            makeStatusNotification("Output is $outputUri", appContext)
+            // 成功したことを戻り値で報告
+            Result.success()
         } catch (throwable: Throwable) {
-            // If there were errors, return FAILURE
-            Timber.e(throwable)
+            // 失敗したことを戻り値で報告
             Result.failure()
         }
     }

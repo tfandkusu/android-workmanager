@@ -59,15 +59,11 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$versions.appcompat"
     implementation "androidx.constraintlayout:constraintlayout:$versions.constraint_layout"
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+    // WorkManagerのライブラリ
     implementation "androidx.work:work-runtime-ktx:$versions.work"
     implementation "com.github.bumptech.glide:glide:$versions.glide"
     implementation "com.jakewharton.timber:timber:$versions.timber"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
-
-    // WorkManagerのライブラリ
-    implementation "androidx.work:work-runtime-ktx:$versions.work"
-
-
 
     androidTestImplementation "androidx.arch.core:core-testing:$versions.androidxArch"
     androidTestImplementation "androidx.test.ext:junit:$versions.junit"
