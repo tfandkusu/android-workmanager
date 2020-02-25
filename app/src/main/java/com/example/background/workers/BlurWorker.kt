@@ -44,18 +44,26 @@ class BlurWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
         makeStatusNotification("Blurring image", appContext)
 
         return try {
-            // テスト用画像からビットマップを生成し
-            val picture = BitmapFactory.decodeResource(
-                    appContext.resources,
-                    R.drawable.test)
+            val resolver = appContext.contentResolver
+
+            // UriからBitmapの変換
+            val resourceUri = inputData.getString(KEY_IMAGE_URI)
+
+            val picture = BitmapFactory.decodeStream(
+                    resolver.openInputStream(Uri.parse(resourceUri)))
+
             // ブラーエフェクトをかけて別のBitmapを作成し
             val output = blurBitmap(picture, appContext)
             // 書き出す
             val outputUri = writeBitmapToFile(appContext, output)
             // 通知を表示する
             makeStatusNotification("Output is $outputUri", appContext)
+
+            // MapをworkDateOfに渡すことでData型を生成できる
+            val outputData = workDataOf(KEY_IMAGE_URI to outputUri.toString())
+
             // 成功したことを戻り値で報告
-            Result.success()
+            Result.success(outputData)
         } catch (throwable: Throwable) {
             // 失敗したことを戻り値で報告
             Result.failure()

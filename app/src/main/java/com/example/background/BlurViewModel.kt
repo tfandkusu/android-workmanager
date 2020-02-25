@@ -55,7 +55,13 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
      */
     internal fun applyBlur(blurLevel: Int) {
         // 1回だけのタスクを予約
-        workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
+        // workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
+
+        // 入力付きタスク
+        val blurRequest = OneTimeWorkRequestBuilder<BlurWorker>()
+                .setInputData(createInputDataForUri())
+                .build()
+        workManager.enqueue(blurRequest)
 
         /**
         // Add WorkRequest to Cleanup temporary images
@@ -105,6 +111,8 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Workerに対する入出力はすべてData型
+     *
      * Creates the input data bundle which includes the Uri to operate on
      * @return Data which contains the Image Uri as a String
      */
